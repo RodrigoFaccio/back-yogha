@@ -1,0 +1,180 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Products",
+    "description": "Documentation from products api",
+    "version": "1.0.0"
+  },
+  "basePath": "/",
+
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+
+  "paths": {
+    "/users": {
+      "get": {
+        "description": "Rota que traz todos os users",
+        "tags": ["Users"],
+
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+
+    "/users/login": {
+      "post": {
+        "tags": ["Users"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "example": {
+                  "name": "rodrigo@gmail.com",
+                  "password": "123"
+                }
+              }
+            }
+          }
+        },
+
+        "responses": {
+          "400": {
+            "description": "Email ou senha invalidos"
+          },
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/locations": {
+      "get": {
+        "description": "Rota para listagem de todas as locações",
+        "tags": ["Locations"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "type": "number",
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "type": "string",
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "guest",
+            "type": "string",
+            "required": false
+          }
+        ],
+
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/locations/searchAddressAutocomplete": {
+      "get": {
+        "description": "Rota para listagem dos endereços para barra de pesquisa",
+        "tags": ["Locations"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "type": "number",
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "type": "string",
+            "required": false
+          }
+        ],
+
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/locations/reservation": {
+      "get": {
+        "description": "Rota para listagem dos imoveis livres para serem alugados",
+        "tags": ["Locations"],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "type": "number",
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "checkIn",
+            "type": "string",
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "checkOut",
+            "type": "string",
+            "required": true
+          }
+        ],
+
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/locations/{id}": {
+      "get": {
+        "description": "Rota para listagem de uma acomodação de acordo com seu Id",
+        "tags": ["Locations"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "type": "number",
+            "required": false
+          }
+        ],
+
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  }
+}
