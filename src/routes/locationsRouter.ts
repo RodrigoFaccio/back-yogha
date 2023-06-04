@@ -5,12 +5,13 @@ import {
   getLocationLiveController,
   getUniqueLocation
 } from '../controllers/locations';
+import { verifyJWT } from '../utils/jwt';
 
 const router = express.Router();
 
-router.get('/', getLocationsController);
-router.get('/searchAddressAutocomplete', getLocationAutocompleteController);
-router.get('/reservation', getLocationLiveController);
-router.get('/:id', getUniqueLocation);
+router.get('/', verifyJWT, getLocationsController);
+router.get('/searchAddressAutocomplete', verifyJWT, getLocationAutocompleteController);
+router.get('/reservation', verifyJWT, getLocationLiveController);
+router.get('/:id', verifyJWT, getUniqueLocation);
 
 export default router;

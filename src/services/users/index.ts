@@ -19,35 +19,31 @@ export const getUsers = async (): Promise<any[]> => {
 };
 
 export const loginUsers = async (email: string, password: string): Promise<UserResponse> => {
-  try {
-    const user = await db('public.users').select('*').where('email', '=', email);
-    if (user.length > 0) {
-      let hash = user[0].password;
+  const user = await db('public.users').select('*').where('email', '=', email);
+  if (user.length > 0) {
+    let hash = user[0].password;
 
-      hash = hash.replace(/^\$2y(.+)$/i, '$2a$1');
-      const match = await bcrypt.compare(password, hash);
+    hash = hash.replace(/^\$2y(.+)$/i, '$2a$1');
+    const match = await bcrypt.compare(password, hash);
 
-      if (match) {
-        const token = jwt.sign(
-          {
-            userId: user[0].id
-          },
-          SECRETE,
-          { expiresIn: 1800 }
-        );
-        const userToken = {
-          ...user[0],
-          token: token
-        };
+    if (match) {
+      const token = jwt.sign(
+        {
+          userId: user[0].id
+        },
+        SECRETE,
+        { expiresIn: 1800 }
+      );
+      const userToken = {
+        ...user[0],
+        token: token
+      };
 
-        return userToken;
-      } else {
-        throw new AppError('E-mail ou senha incorretos');
-      }
+      return userToken;
     } else {
-      throw new AppError('Usuário não encontrado');
+      throw new AppError('E-mail ou senha incorretos');
     }
-  } catch (error) {
-    throw new AppError('Verifique se todos os campos foram enviados');
+  } else {
+    throw new AppError('Usuário não encontrado');
   }
 };

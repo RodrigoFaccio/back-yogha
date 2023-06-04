@@ -1,16 +1,17 @@
 import { Request, Response, query } from 'express';
 import {
-  getLocationsDataBase,
+  locationFindAll,
   getSearchAutocomplete,
-  getVerifyLocationLive,
+  locationsFindAllFree,
   getUniqueLocationApi
 } from '../../services/locations';
+import AppError from '../../error/AppError';
 
 export const getLocationsController = async (req: Request, res: Response) => {
-  const { limit, query, guest } = req.query;
+  const { limit, query, guest, page } = req.query;
 
   try {
-    const locations = await getLocationsDataBase(limit, query, guest);
+    const locations = await locationFindAll({ guest, limit, page, query });
 
     res.json(locations);
   } catch (error: any) {
@@ -24,7 +25,7 @@ export const getLocationAutocompleteController = async (req: Request, res: Respo
   const { query, limit } = req.query;
 
   try {
-    const locations = await getSearchAutocomplete(query, limit);
+    const locations = await getSearchAutocomplete({ limit, query });
     res.json(locations);
   } catch (error: any) {
     res.status(error.statusCode).json({
@@ -33,10 +34,10 @@ export const getLocationAutocompleteController = async (req: Request, res: Respo
   }
 };
 export const getLocationLiveController = async (req: Request, res: Response) => {
-  const { query, limit, checkIn, checkOut } = req.query;
+  const { query, limit, checkIn, checkOut, page } = req.query;
 
   try {
-    const locations = await getVerifyLocationLive(query, limit, checkIn, checkOut);
+    const locations = await locationsFindAllFree({ checkIn, checkOut, limit, query, page });
     res.json(locations);
   } catch (error: any) {
     res.status(error.statusCode).json({
@@ -46,6 +47,10 @@ export const getLocationLiveController = async (req: Request, res: Response) => 
 };
 export const getUniqueLocation = async (req: Request, res: Response) => {
   const { id } = req.params;
+
+  if (!id) {
+    throw new AppError('Id é obrigatório');
+  }
 
   try {
     const locations = await getUniqueLocationApi(Number(id));

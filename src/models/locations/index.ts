@@ -1,4 +1,7 @@
+import QueryString from 'qs';
+
 export type LocationResponse = {
+  idAccommodation: string;
   id: number;
   created_at: Date;
   updated_at: Date;
@@ -44,4 +47,27 @@ export type LocationSearchAddressResponse = {
   area: string;
   address: string;
   street_number: string;
+};
+
+export type LocationFindAll = {
+  limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  guest: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  page: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+};
+export interface LocationsResponse {
+  data: LocationResponse[];
+  currentPage: number;
+  limit: number;
+}
+export type LocationsAllFree = {
+  query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  checkIn: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  checkOut: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  page: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+};
+export type SearchLocationsParams = {
+  query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
 };

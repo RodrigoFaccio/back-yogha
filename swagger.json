@@ -88,9 +88,20 @@
             "name": "guest",
             "type": "string",
             "required": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "type": "number",
+            "required": false
           }
         ],
 
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -146,6 +157,12 @@
             "name": "checkOut",
             "type": "string",
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "type": "number",
+            "required": false
           }
         ],
 

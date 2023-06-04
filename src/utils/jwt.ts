@@ -1,17 +1,24 @@
 import express, { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
 const SECRETE = 'djashdjksah';
-
-const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
+import jwt, { JwtPayload } from 'jsonwebtoken';
+interface CustomRequest extends Request {
+  userId?: string;
+}
+const verifyJWT = async (req: CustomRequest, res: Response, next: NextFunction) => {
   const authorizationHeader = req.headers['authorization'];
 
   if (authorizationHeader) {
     const [bearer, token] = authorizationHeader.split(' ');
 
     if (bearer === 'Bearer' && token) {
-      jwt.verify(token, SECRETE, (error, decode) => {
-        if (error) return res.status(401).json('Token inválido');
+      jwt.verify(token, SECRETE, (error, decoded: any) => {
+        if (error) {
+          return res.status(401).json('Token inválido');
+        }
 
+        const userId = decoded.userId;
+        req.userId = userId;
+        (req as any).token = userId;
         next();
       });
     } else {
@@ -21,4 +28,5 @@ const verifyJWT = async (req: Request, res: Response, next: NextFunction) => {
     return res.status(400).json('Token não encontrado');
   }
 };
+
 export { verifyJWT };

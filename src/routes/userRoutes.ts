@@ -4,7 +4,7 @@ import { verifyJWT } from '../utils/jwt';
 
 const router = express.Router();
 
-router.get('/', getUsersController);
+router.get('/', verifyJWT, getUsersController);
 router.post('/login', loginUserController);
 
 export default router;

@@ -1,17 +1,21 @@
-import { UserResponse } from '../../models/Users';
-import { QueryResult } from 'pg';
 import AppError, { ErrorProps } from '../../error/AppError';
 import QueryString from 'qs';
 import db from '../../database/bd';
-import { LocationResponse, LocationSearchAddressResponse } from '../../models/locations';
-import { convertAddressLatLgn } from '../../utils/convertAddress';
-export const getLocationsDataBase = async (
-  limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined,
-  query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined,
-  guest: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined
-): Promise<any[]> => {
+import {
+  LocationFindAll,
+  LocationResponse,
+  LocationSearchAddressResponse,
+  LocationsAllFree,
+  LocationsResponse,
+  SearchLocationsParams
+} from '../../models/locations';
+export const locationFindAll = async ({ guest, limit, page, query }: LocationFindAll): Promise<LocationsResponse> => {
+  const maxGuestCapacity = guest !== undefined ? Number(guest) : 0;
+
   try {
     if (query) {
+      const offset = (Number(page) - 1) * Number(limit);
+
       const locations = await db('avantio.accommodations')
         .select(['avantio.accommodations.id as idAccommodation', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
@@ -20,37 +24,53 @@ export const getLocationsDataBase = async (
         .orWhereRaw('LOWER(buildings.area) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.address) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.street_number) LIKE ?', [`%${String(query).toLowerCase()}%`])
-        .where('avantio.accommodations.max_guest_capacity', '>=', Number(guest))
+        .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
+        .offset(offset)
 
         .limit(Number(limit));
+
       if (locations) {
-        return locations;
+        const currentPage = page ? Number(page) : 1;
+
+        return {
+          data: locations,
+          currentPage,
+          limit: Number(limit)
+        };
       } else {
-        throw new AppError('Não a acomodações');
+        throw new AppError('Não há acomodações');
       }
     } else {
-      const locations = await db('avantio.accommodations')
-        .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
-        .where('avantio.accommodations.max_guest_capacity', '>=', Number(guest))
+      const offset = (Number(page) - 1) * Number(limit);
 
+      const locations: LocationResponse[] = await db('avantio.accommodations')
+        .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
+        .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
         .select(['avantio.accommodations.id as idAccommodation', '*'])
-        .limit(Number(limit));
+        .limit(Number(limit))
+        .offset(offset);
 
       if (locations) {
-        return locations;
+        const currentPage = page ? Number(page) : 1;
+
+        return {
+          data: locations,
+          currentPage,
+          limit: Number(limit)
+        };
       } else {
-        throw new AppError('Não a acomodações');
+        throw new AppError('Não há acomodações');
       }
     }
-  } catch (error) {
-    throw new AppError('Falta de parâmetros');
+  } catch {
+    throw new AppError('Não há acomodações');
   }
 };
 
-export const getSearchAutocomplete = async (
-  query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined,
-  limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined
-): Promise<LocationSearchAddressResponse[]> => {
+export const getSearchAutocomplete = async ({
+  limit,
+  query
+}: SearchLocationsParams): Promise<LocationSearchAddressResponse[]> => {
   try {
     const locations = await db('system.buildings')
       .select(['id', 'name', 'town', 'area', 'address', 'street_number'])
@@ -75,13 +95,16 @@ export const getSearchAutocomplete = async (
     throw new AppError('Falta de parâmetros');
   }
 };
-export const getVerifyLocationLive = async (
-  query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined,
-  limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined,
-  checkIn: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined,
-  checkOut: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined
-): Promise<LocationSearchAddressResponse[] | ErrorProps> => {
+export const locationsFindAllFree = async ({
+  checkIn,
+  checkOut,
+  limit,
+  query,
+  page
+}: LocationsAllFree): Promise<LocationsResponse | ErrorProps> => {
   try {
+    const offset = (Number(page) - 1) * Number(limit);
+
     const locations = await db('avantio.accommodations')
       .select(['avantio.accommodations.*', 'system.buildings.*'])
       .leftJoin('avantio.booking', 'avantio.accommodations.code', '=', 'avantio.booking.accommodation_code')
@@ -94,9 +117,18 @@ export const getVerifyLocationLive = async (
           String(checkOut)
         );
       })
+      .offset(offset)
+
       .limit(Number(limit));
+
     if (locations.length > 0) {
-      return locations;
+      const currentPage = page ? Number(page) : 1;
+
+      return {
+        data: locations,
+        currentPage,
+        limit: Number(limit)
+      };
     } else {
       return {
         statusCode: 400,
