@@ -3,9 +3,9 @@ const db = knex({
   client: 'pg',
   connection: {
     user: 'yogha',
-    host: 'yogha.cdfv1v16vhkd.us-east-1.rds.amazonaws.com',
+    host: 'yogha-development.cdfv1v16vhkd.us-east-1.rds.amazonaws.com',
     database: 'yogha',
-    password: '8Nk8kDbsFNfuJ2NF',
+    password: 'nfPw6S8uTKMex_z8',
     port: 5432,
     connectionTimeoutMillis: 2000
   }

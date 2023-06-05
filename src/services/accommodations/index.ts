@@ -2,21 +2,24 @@ import AppError, { ErrorProps } from '../../error/AppError';
 import QueryString from 'qs';
 import db from '../../database/bd';
 import {
-  LocationFindAll,
-  LocationResponse,
-  LocationSearchAddressResponse,
-  LocationsAllFree,
-  LocationsResponse,
-  SearchLocationsParams
+  AccommodationFindAll, AccommodationResponse, AccommodationsResponse,
+  AccommodationSearchAddressResponse,
+  SearchAccommodationsParams,
+  AccommodationsAllFree
 } from '../../models/locations';
-export const locationFindAll = async ({ guest, limit, page, query }: LocationFindAll): Promise<LocationsResponse> => {
+export const accommodationsFindAll = async ({
+  guest,
+  limit,
+  page,
+  query
+}: AccommodationFindAll): Promise<AccommodationsResponse> => {
   const maxGuestCapacity = guest !== undefined ? Number(guest) : 0;
 
   try {
     if (query) {
       const offset = (Number(page) - 1) * Number(limit);
 
-      const locations = await db('avantio.accommodations')
+      const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .select(['avantio.accommodations.id as idAccommodation', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
         .whereRaw('LOWER(buildings.town) LIKE ?', [`%${String(query).toLowerCase()}%`])
@@ -29,11 +32,11 @@ export const locationFindAll = async ({ guest, limit, page, query }: LocationFin
 
         .limit(Number(limit));
 
-      if (locations) {
+      if (accommodations) {
         const currentPage = page ? Number(page) : 1;
 
         return {
-          data: locations,
+          data: accommodations,
           currentPage,
           limit: Number(limit)
         };
@@ -43,18 +46,18 @@ export const locationFindAll = async ({ guest, limit, page, query }: LocationFin
     } else {
       const offset = (Number(page) - 1) * Number(limit);
 
-      const locations: LocationResponse[] = await db('avantio.accommodations')
+      const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
         .select(['avantio.accommodations.id as idAccommodation', '*'])
         .limit(Number(limit))
         .offset(offset);
 
-      if (locations) {
+      if (accommodations) {
         const currentPage = page ? Number(page) : 1;
 
         return {
-          data: locations,
+          data: accommodations,
           currentPage,
           limit: Number(limit)
         };
@@ -70,24 +73,24 @@ export const locationFindAll = async ({ guest, limit, page, query }: LocationFin
 export const getSearchAutocomplete = async ({
   limit,
   query
-}: SearchLocationsParams): Promise<LocationSearchAddressResponse[]> => {
+}: SearchAccommodationsParams): Promise<AccommodationSearchAddressResponse[]> => {
   try {
-    const locations = await db('system.buildings')
+    const accommodations = await db('system.buildings')
       .select(['id', 'name', 'town', 'area', 'address', 'street_number'])
       .whereRaw('LOWER(town) LIKE ?', [`%${String(query).toLowerCase()}%`])
       .orWhereRaw('LOWER(name) LIKE ?', [`%${String(query).toLowerCase()}%`])
       .orWhereRaw('LOWER(address) LIKE ?', [`%${String(query).toLowerCase()}%`])
       .orWhereRaw('LOWER(street_number) LIKE ?', [`%${String(query).toLowerCase()}%`])
       .limit(Number(limit));
-    const newLocations = locations.map((item) => {
+    const newAccommodations = accommodations.map((item) => {
       return {
         ...item,
         id: Number(item.id)
       };
     });
 
-    if (newLocations) {
-      return newLocations;
+    if (newAccommodations) {
+      return newAccommodations;
     } else {
       throw new AppError('Não a acomodações');
     }
@@ -95,17 +98,17 @@ export const getSearchAutocomplete = async ({
     throw new AppError('Falta de parâmetros');
   }
 };
-export const locationsFindAllFree = async ({
+export const accommodationsFindAllFree = async ({
   checkIn,
   checkOut,
   limit,
   query,
   page
-}: LocationsAllFree): Promise<LocationsResponse | ErrorProps> => {
+}: AccommodationsAllFree): Promise<AccommodationsResponse | ErrorProps> => {
   try {
     const offset = (Number(page) - 1) * Number(limit);
 
-    const locations = await db('avantio.accommodations')
+    const accommodations = await db('avantio.accommodations')
       .select(['avantio.accommodations.*', 'system.buildings.*'])
       .leftJoin('avantio.booking', 'avantio.accommodations.code', '=', 'avantio.booking.accommodation_code')
       .leftJoin('system.buildings', 'accommodations.building_yogha', '=', 'system.buildings.id')
@@ -121,11 +124,11 @@ export const locationsFindAllFree = async ({
 
       .limit(Number(limit));
 
-    if (locations.length > 0) {
+    if (accommodations.length > 0) {
       const currentPage = page ? Number(page) : 1;
 
       return {
-        data: locations,
+        data: accommodations,
         currentPage,
         limit: Number(limit)
       };
@@ -140,16 +143,16 @@ export const locationsFindAllFree = async ({
   }
 };
 
-export const getUniqueLocationApi = async (id: number): Promise<LocationSearchAddressResponse[] | ErrorProps> => {
+export const getUniqueAccommodationApi = async (id: number): Promise<AccommodationSearchAddressResponse[] | ErrorProps> => {
   try {
-    const locations = await db('avantio.accommodations')
+    const accommodations = await db('avantio.accommodations')
       .select(['avantio.accommodations.id as idAccommodation', '*'])
 
       .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
       .where('avantio.accommodations.id', '=', id);
 
-    if (locations.length > 0) {
-      return locations;
+    if (accommodations.length > 0) {
+      return accommodations;
     } else {
       return {
         statusCode: 400,

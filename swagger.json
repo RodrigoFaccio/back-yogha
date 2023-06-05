@@ -66,7 +66,7 @@
         }
       }
     },
-    "/locations": {
+    "/accommodations": {
       "get": {
         "description": "Rota para listagem de todas as locações",
         "tags": ["Locations"],
@@ -109,7 +109,7 @@
         }
       }
     },
-    "/locations/searchAddressAutocomplete": {
+    "/accommodations/searchAddressAutocomplete": {
       "get": {
         "description": "Rota para listagem dos endereços para barra de pesquisa",
         "tags": ["Locations"],
@@ -135,7 +135,7 @@
         }
       }
     },
-    "/locations/reservation": {
+    "/accommodations/reservation": {
       "get": {
         "description": "Rota para listagem dos imoveis livres para serem alugados",
         "tags": ["Locations"],
@@ -173,7 +173,7 @@
         }
       }
     },
-    "/locations/{id}": {
+    "/accommodations/{id}": {
       "get": {
         "description": "Rota para listagem de uma acomodação de acordo com seu Id",
         "tags": ["Locations"],
