@@ -135,7 +135,7 @@
         }
       }
     },
-    "/accommodations/bookings": {
+    "/accommodations/accommodationsFree": {
       "post": {
         "tags": ["Accommodations"],
         "requestBody": {
@@ -183,7 +183,7 @@
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "refStayId",
             "type": "number",
             "required": false
           }

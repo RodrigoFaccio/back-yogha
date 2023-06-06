@@ -12,6 +12,10 @@ import {
 } from '../../models/locations';
 import { checkCache, setCache } from '../../redis/redisCache';
 import axios from 'axios';
+const username = '4b6a509f';
+const password = 'ec9b4a62';
+const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
+
 export const accommodationsFindAll = async ({
   guest,
   limit,
@@ -36,12 +40,14 @@ export const accommodationsFindAll = async ({
     if (query) {
       const offset = (Number(page) - 1) * Number(limit);
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
-        .select(['avantio.accommodations.id as idAccommodation', '*'])
+        .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
         .whereRaw('LOWER(buildings.town) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.name) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.area) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.address) LIKE ?', [`%${String(query).toLowerCase()}%`])
+        .orWhereRaw('LOWER(avantio.accommodations.accommodation) LIKE ?', [`%${String(query).toLowerCase()}%`])
+
         .orWhereRaw('LOWER(buildings.street_number) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
         .offset(offset)
@@ -86,7 +92,7 @@ export const accommodationsFindAll = async ({
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
-        .select(['avantio.accommodations.id as idAccommodation', '*'])
+        .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .limit(Number(limit))
         .offset(offset);
 
@@ -160,11 +166,6 @@ export const accommodationsFindAllFree = async (data: DataParamsStay): Promise<a
     };
   }
   try {
-    const username = '4b6a509f';
-    const password = 'ec9b4a62';
-
-    const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
-
     const responseStay = await axios.post('https://yogha.stays.net/external/v1/booking/search-listings', data, {
       headers: {
         Authorization: authHeader
@@ -183,24 +184,16 @@ export const accommodationsFindAllFree = async (data: DataParamsStay): Promise<a
   }
 };
 
-export const getUniqueAccommodationApi = async (
-  id: number
-): Promise<AccommodationSearchAddressResponse[] | ErrorProps> => {
+export const getUniqueAccommodationApi = async (id: string): Promise<any | ErrorProps> => {
   try {
-    const accommodations = await db('avantio.accommodations')
-      .select(['avantio.accommodations.id as idAccommodation', '*'])
+    const accommodations = await axios.get(`https://yogha.stays.net/external/v1/content/listings/${id}`, {
+      headers: {
+        Authorization: authHeader
+      }
+    });
+    console.log(accommodations);
 
-      .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
-      .where('avantio.accommodations.id', '=', id);
-
-    if (accommodations.length > 0) {
-      return accommodations;
-    } else {
-      return {
-        statusCode: 400,
-        message: 'Acomodação não encontrada'
-      };
-    }
+    return accommodations.data;
   } catch (error) {
     throw new AppError('Verifique os parametros');
   }

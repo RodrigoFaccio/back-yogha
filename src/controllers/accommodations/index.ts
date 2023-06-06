@@ -85,7 +85,7 @@ export const getUniqueAccommodation = async (req: Request, res: Response) => {
   }
 
   try {
-    const accommodations = await getUniqueAccommodationApi(Number(id));
+    const accommodations = await getUniqueAccommodationApi(id);
     res.json(accommodations);
   } catch (error: any) {
     res.status(error.statusCode).json({
