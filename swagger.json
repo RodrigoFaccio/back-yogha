@@ -69,7 +69,7 @@
     "/accommodations": {
       "get": {
         "description": "Rota para listagem de todas as locações",
-        "tags": ["Locations"],
+        "tags": ["Accommodations"],
         "parameters": [
           {
             "in": "query",
@@ -112,7 +112,7 @@
     "/accommodations/searchAddressAutocomplete": {
       "get": {
         "description": "Rota para listagem dos endereços para barra de pesquisa",
-        "tags": ["Locations"],
+        "tags": ["Accommodations"],
         "parameters": [
           {
             "in": "query",
@@ -135,38 +135,41 @@
         }
       }
     },
-    "/accommodations/reservation": {
-      "get": {
-        "description": "Rota para listagem dos imoveis livres para serem alugados",
-        "tags": ["Locations"],
-        "parameters": [
-          {
-            "in": "query",
-            "name": "limit",
-            "type": "number",
-            "required": false
-          },
-          {
-            "in": "query",
-            "name": "checkIn",
-            "type": "string",
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "checkOut",
-            "type": "string",
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "type": "number",
-            "required": false
+    "/accommodations/bookings": {
+      "post": {
+        "tags": ["Accommodations"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+
+                "example": {
+                  "from": "2020-02-29",
+                  "to": "2020-02-29",
+                  "guests": 99,
+                  "rooms": [99],
+                  "cities": ["string"],
+                  "regions": ["string"],
+                  "countries": ["string"],
+                  "states": ["string"],
+                  "properties": ["5dee464910450609ca7ea2d7", "XQ02F"],
+                  "amenities": ["5dee464910450609ca7ea2d7"],
+                  "inventory": ["string"],
+                  "listingId": "5dee464910450609ca7ea2d7",
+                  "sort": "rating",
+                  "skip": 0,
+                  "limit": 100
+                }
+              }
+            }
           }
-        ],
+        },
 
         "responses": {
+          "400": {
+            "description": "Email ou senha invalidos"
+          },
           "200": {
             "description": "OK"
           }
@@ -176,7 +179,7 @@
     "/accommodations/{id}": {
       "get": {
         "description": "Rota para listagem de uma acomodação de acordo com seu Id",
-        "tags": ["Locations"],
+        "tags": ["Accommodations"],
         "parameters": [
           {
             "in": "path",

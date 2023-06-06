@@ -2,11 +2,16 @@ import AppError, { ErrorProps } from '../../error/AppError';
 import QueryString from 'qs';
 import db from '../../database/bd';
 import {
-  AccommodationFindAll, AccommodationResponse, AccommodationsResponse,
+  AccommodationFindAll,
+  AccommodationResponse,
+  AccommodationsResponse,
   AccommodationSearchAddressResponse,
   SearchAccommodationsParams,
-  AccommodationsAllFree
+  AccommodationsAllFree,
+  DataParamsStay
 } from '../../models/locations';
+import { checkCache, setCache } from '../../redis/redisCache';
+import axios from 'axios';
 export const accommodationsFindAll = async ({
   guest,
   limit,
@@ -14,11 +19,22 @@ export const accommodationsFindAll = async ({
   query
 }: AccommodationFindAll): Promise<AccommodationsResponse> => {
   const maxGuestCapacity = guest !== undefined ? Number(guest) : 0;
+  const cacheKey = `accommodations:${JSON.stringify({ guest, limit, page, query })}`;
+  const cacheData = await checkCache(cacheKey);
+  if (cacheData) {
+    const parsedData = JSON.parse(cacheData);
+
+    return {
+      data: parsedData.data,
+      currentPage: parsedData.currentPage,
+      limit: parsedData.limit,
+      cacheExists: true
+    };
+  }
 
   try {
     if (query) {
       const offset = (Number(page) - 1) * Number(limit);
-
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .select(['avantio.accommodations.id as idAccommodation', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
@@ -34,16 +50,37 @@ export const accommodationsFindAll = async ({
 
       if (accommodations) {
         const currentPage = page ? Number(page) : 1;
-
+        setCache(
+          cacheKey,
+          JSON.stringify({
+            data: accommodations,
+            currentPage,
+            limit: Number(limit)
+          }),
+          60
+        );
         return {
           data: accommodations,
           currentPage,
-          limit: Number(limit)
+          limit: Number(limit),
+          cacheExists: false
         };
       } else {
         throw new AppError('Não há acomodações');
       }
     } else {
+      const cacheKey = `accommodations:${JSON.stringify({ guest, limit, page })}`;
+      const cacheData = await checkCache(cacheKey);
+      if (cacheData) {
+        const parsedData = JSON.parse(cacheData);
+
+        return {
+          data: parsedData.data,
+          currentPage: parsedData.currentPage,
+          limit: parsedData.limit,
+          cacheExists: true
+        };
+      }
       const offset = (Number(page) - 1) * Number(limit);
 
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
@@ -55,11 +92,21 @@ export const accommodationsFindAll = async ({
 
       if (accommodations) {
         const currentPage = page ? Number(page) : 1;
+        setCache(
+          cacheKey,
+          JSON.stringify({
+            data: accommodations,
+            currentPage,
+            limit: Number(limit)
+          }),
+          10
+        );
 
         return {
           data: accommodations,
           currentPage,
-          limit: Number(limit)
+          limit: Number(limit),
+          cacheExists: false
         };
       } else {
         throw new AppError('Não há acomodações');
@@ -98,52 +145,47 @@ export const getSearchAutocomplete = async ({
     throw new AppError('Falta de parâmetros');
   }
 };
-export const accommodationsFindAllFree = async ({
-  checkIn,
-  checkOut,
-  limit,
-  query,
-  page
-}: AccommodationsAllFree): Promise<AccommodationsResponse | ErrorProps> => {
+export const accommodationsFindAllFree = async (data: DataParamsStay): Promise<any | ErrorProps> => {
+  const cacheKey = `accommodations:${JSON.stringify(data)}`;
+  console.log(cacheKey);
+  const cacheData = await checkCache(cacheKey);
+  if (cacheData) {
+    const parsedData = JSON.parse(cacheData);
+
+    return {
+      data: parsedData.data,
+      currentPage: parsedData.currentPage,
+      limit: parsedData.limit,
+      cacheExists: true
+    };
+  }
   try {
-    const offset = (Number(page) - 1) * Number(limit);
+    const username = '4b6a509f';
+    const password = 'ec9b4a62';
 
-    const accommodations = await db('avantio.accommodations')
-      .select(['avantio.accommodations.*', 'system.buildings.*'])
-      .leftJoin('avantio.booking', 'avantio.accommodations.code', '=', 'avantio.booking.accommodation_code')
-      .leftJoin('system.buildings', 'accommodations.building_yogha', '=', 'system.buildings.id')
-      .whereNull('avantio.booking.accommodation_code')
-      .orWhere(function () {
-        this.where('avantio.booking.arrival_date', '>=', String(checkIn)).orWhere(
-          'booking.departure_date',
-          '<=',
-          String(checkOut)
-        );
-      })
-      .offset(offset)
+    const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
 
-      .limit(Number(limit));
-
-    if (accommodations.length > 0) {
-      const currentPage = page ? Number(page) : 1;
-
-      return {
-        data: accommodations,
-        currentPage,
-        limit: Number(limit)
-      };
-    } else {
-      return {
-        statusCode: 400,
-        message: 'Acomodação não encontrada'
-      };
-    }
+    const responseStay = await axios.post('https://yogha.stays.net/external/v1/booking/search-listings', data, {
+      headers: {
+        Authorization: authHeader
+      }
+    });
+    setCache(
+      cacheKey,
+      JSON.stringify({
+        data: responseStay.data
+      }),
+      60
+    );
+    return responseStay.data;
   } catch (error) {
-    throw new AppError('Falta de parâmetros');
+    throw new AppError('Verifique os parametros');
   }
 };
 
-export const getUniqueAccommodationApi = async (id: number): Promise<AccommodationSearchAddressResponse[] | ErrorProps> => {
+export const getUniqueAccommodationApi = async (
+  id: number
+): Promise<AccommodationSearchAddressResponse[] | ErrorProps> => {
   try {
     const accommodations = await db('avantio.accommodations')
       .select(['avantio.accommodations.id as idAccommodation', '*'])

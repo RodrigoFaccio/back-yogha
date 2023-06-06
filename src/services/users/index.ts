@@ -1,4 +1,5 @@
 import { UserResponse } from '../../models/Users';
+import QueryString from 'qs';
 
 import pool from '../../database/bd';
 import { QueryResult } from 'pg';
@@ -45,5 +46,20 @@ export const loginUsers = async (email: string, password: string): Promise<UserR
     }
   } else {
     throw new AppError('Usuário não encontrado');
+  }
+};
+export const getBookingsUser = async (
+  id: string,
+  limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined
+): Promise<any[]> => {
+  try {
+    const bookings = await db('avantio.booking')
+      .select('*', 'public.customers.id as idUser', 'avantio.booking.id as idBooking')
+      .leftJoin('public.customers', 'public.customers.id', '=', 'avantio.booking.customer_id')
+      .where('avantio.booking.customer_id', '=', id)
+      .limit(Number(limit));
+    return bookings;
+  } catch {
+    throw new AppError('Não ha acomodações para esse usuário');
   }
 };

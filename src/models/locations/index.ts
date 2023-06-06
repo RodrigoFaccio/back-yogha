@@ -59,6 +59,7 @@ export interface AccommodationsResponse {
   data: AccommodationResponse[];
   currentPage: number;
   limit: number;
+  cacheExists: boolean;
 }
 export type AccommodationsAllFree = {
   query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
@@ -70,4 +71,21 @@ export type AccommodationsAllFree = {
 export type SearchAccommodationsParams = {
   query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
   limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+};
+export type DataParamsStay = {
+  from: string;
+  to: string;
+  guests?: number;
+  rooms?: number;
+  cities?: string[];
+  regions?: ['string'];
+  countries?: ['string'];
+  states?: ['string'];
+  properties?: string[];
+  amenities?: string[];
+  inventory?: string[];
+  listingId?: string;
+  sort?: string;
+  skip?: 0;
+  limit?: 100;
 };
