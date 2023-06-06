@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.get('/', getAccommodationsController);
 router.get('/searchAddressAutocomplete', getAccommodationsAutocompleteController);
-router.post('/reservation', getAccommodationsLiveController);
+router.post('/bookings', getAccommodationsLiveController);
 router.get('/:id', verifyJWT, getUniqueAccommodation);
 
 export default router;
