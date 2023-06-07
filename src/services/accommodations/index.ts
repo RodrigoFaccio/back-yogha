@@ -47,11 +47,10 @@ export const accommodationsFindAll = async ({
         .orWhereRaw('LOWER(buildings.area) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.address) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(avantio.accommodations.accommodation) LIKE ?', [`%${String(query).toLowerCase()}%`])
-
         .orWhereRaw('LOWER(buildings.street_number) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
+        .whereNotNull('avantio.accommodations.refStayId') // Filter to include only non-null values
         .offset(offset)
-
         .limit(Number(limit));
 
       if (accommodations) {
@@ -92,8 +91,11 @@ export const accommodationsFindAll = async ({
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
+        .whereNotNull('avantio.accommodations.ref_stays') // Filter to include only non-null values
+
         .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .limit(Number(limit))
+
         .offset(offset);
 
       if (accommodations) {
