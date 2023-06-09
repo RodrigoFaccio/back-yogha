@@ -20,12 +20,13 @@ export const getUsers = async (): Promise<any[]> => {
 };
 
 export const loginUsers = async (email: string, password: string): Promise<UserResponse> => {
-  const user = await db('public.users').select('*').where('email', '=', email);
+  const user = await db('public.customers').select('*').where('email', '=', email);
   if (user.length > 0) {
     let hash = user[0].password;
+    console.log(password);
 
-    hash = hash.replace(/^\$2y(.+)$/i, '$2a$1');
     const match = await bcrypt.compare(password, hash);
+    console.log(match);
 
     if (match) {
       const token = jwt.sign(

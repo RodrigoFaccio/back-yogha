@@ -87,7 +87,6 @@ export const accommodationsFindAll = async ({
         };
       }
       const offset = (Number(page) - 1) * Number(limit);
-
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
