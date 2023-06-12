@@ -195,6 +195,18 @@
           }
         }
       }
+    },
+    "/amenities/": {
+      "get": {
+        "description": "Rota para listagem de filtros = amenities",
+        "tags": ["Amenities"],
+
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   }
 }

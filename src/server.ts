@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import userRoutes from './routes/userRoutes';
+import amenities from './routes/amenitiesRoute';
+
 import locationRouter from './routes/accommodationsRoute';
 import swaggerUI from 'swagger-ui-express';
 import swaggerDocument from '../swagger.json';
@@ -15,6 +17,8 @@ app.use(cors());
 // Rotas
 app.use('/users', userRoutes);
 app.use('/accommodations', locationRouter);
+app.use('/amenities', amenities);
+
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocument));
 
 // Rota de exemplo
