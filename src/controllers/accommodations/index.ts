@@ -96,13 +96,14 @@ export const getUniqueAccommodation = async (req: Request, res: Response) => {
 };
 export const getValueAccommodations = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const { checkIn, checkOut } = req.body;
 
   if (!id) {
     throw new AppError('Id é obrigatório');
   }
 
   try {
-    const accommodations = await getValueAccommodationsService(id);
+    const accommodations = await getValueAccommodationsService(id, checkIn, checkOut);
     res.json(accommodations);
   } catch (error: any) {
     res.status(error.statusCode).json({

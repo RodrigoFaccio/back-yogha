@@ -14,6 +14,6 @@ router.get('/', getAccommodationsController);
 router.get('/searchAddressAutocomplete', getAccommodationsAutocompleteController);
 router.post('/accommodationsFree', getAccommodationsLiveController);
 router.get('/:id', getUniqueAccommodation);
-router.get('/accommodationValeu/:id', getValueAccommodations);
+router.post('/accommodationValeu/:id', getValueAccommodations);
 
 export default router;

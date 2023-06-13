@@ -18,6 +18,7 @@
     "ioredis": "^5.3.2",
     "jsonwebtoken": "^9.0.0",
     "knex": "^2.4.2",
+    "moment": "^2.29.4",
     "pg": "^8.11.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^4.6.3",

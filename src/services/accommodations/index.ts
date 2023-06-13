@@ -12,6 +12,7 @@ import {
 } from '../../models/locations';
 import { checkCache, setCache } from '../../redis/redisCache';
 import axios from 'axios';
+import moment from 'moment';
 const username = '4b6a509f';
 const password = 'ec9b4a62';
 const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
@@ -22,6 +23,7 @@ export const accommodationsFindAll = async ({
   page,
   query
 }: AccommodationFindAll): Promise<AccommodationsResponse> => {
+  console.log(query);
   const maxGuestCapacity = guest !== undefined ? Number(guest) : 0;
   const cacheKey = `accommodations:${JSON.stringify({ guest, limit, page, query })}`;
   const cacheData = await checkCache(cacheKey);
@@ -42,6 +44,15 @@ export const accommodationsFindAll = async ({
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
+        .leftJoin('avantio.rooms', 'avantio.accommodations.id', '=', 'avantio.rooms.id_accommodation')
+        .leftJoin('avantio.room_images', 'avantio.room_images.room_id', '=', 'avantio.rooms.id')
+
+        .leftJoin(
+          'properties.accommodations_emphasys',
+          'properties.accommodations_emphasys.accommodation_id',
+          '=',
+          'avantio.accommodations.id'
+        )
 
         .whereRaw('LOWER(buildings.town) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.name) LIKE ?', [`%${String(query).toLowerCase()}%`])
@@ -50,7 +61,8 @@ export const accommodationsFindAll = async ({
         .orWhereRaw('LOWER(avantio.accommodations.accommodation) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.street_number) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
-        .whereNotNull('avantio.accommodations.refStayId') // Filter to include only non-null values
+        .whereNotNull('avantio.accommodations.ref_stays')
+
         .offset(offset)
         .limit(Number(limit));
 
@@ -96,6 +108,8 @@ export const accommodationsFindAll = async ({
           '=',
           'avantio.accommodations.id'
         )
+        .leftJoin('avantio.rooms', 'avantio.accommodations.id', '=', 'avantio.rooms.id_accommodation')
+        .leftJoin('avantio.room_images', 'avantio.room_images.room_id', '=', 'avantio.rooms.id')
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
         .whereNotNull('avantio.accommodations.ref_stays') // Filter to include only non-null values
 
@@ -207,13 +221,45 @@ export const getUniqueAccommodationApi = async (id: string): Promise<any | Error
   }
 };
 
-export const getValueAccommodationsService = async (id: string): Promise<any | ErrorProps> => {
+export const getValueAccommodationsService = async (
+  id: string,
+  checkIn: string,
+  checkOut: string
+): Promise<any | ErrorProps> => {
   try {
     const accommodations = await db('properties.rate_plans')
       .select('*')
       .leftJoin('avantio.accommodations', 'properties.rate_plans.accommodation_id', '=', 'avantio.accommodations.id')
       .where('properties.rate_plans.accommodation_id', '=', id);
-    return accommodations;
+
+    function somarValoresPorIntervalo(dataInicio: string, dataFim: string) {
+      let soma = 0;
+      let numDias = 0;
+      const datas = Object.keys(accommodations[0]).filter((key) =>
+        moment(key).isBetween(dataInicio, dataFim, null, '[]')
+      );
+
+      for (let i = 0; i < datas.length; i++) {
+        const valor = parseFloat(accommodations[0][datas[i]]);
+        if (!isNaN(valor)) {
+          soma += valor;
+        }
+      }
+
+      numDias = moment(dataFim).diff(dataInicio, 'days') + 1;
+
+      return {
+        soma,
+        numDias
+      };
+    }
+    const total = somarValoresPorIntervalo(checkIn, checkOut);
+
+    return {
+      ...accommodations[0],
+      sumDailyValues: total.soma,
+      averagePerNight: total.soma / total.numDias
+    };
   } catch (error) {
     throw new AppError('Verifique os parametros');
   }

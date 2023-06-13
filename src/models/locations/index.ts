@@ -2,6 +2,7 @@ import QueryString from 'qs';
 
 export type AccommodationResponse = {
   idAccommodation: string;
+  ref_stays: string;
   id: number;
   created_at: Date;
   updated_at: Date;
