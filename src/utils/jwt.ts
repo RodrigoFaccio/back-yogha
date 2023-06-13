@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
-const SECRETE = 'djashdjksah';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+const SECRETE = process.env.SECRET as Secret;
+import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 interface CustomRequest extends Request {
   userId?: string;
 }

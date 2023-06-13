@@ -13,7 +13,7 @@ import db from '../../database/bd';
 
 export const getUsers = async (): Promise<any[]> => {
   try {
-    const users = await db('public.users').select('id', 'name', 'email');
+    const users = await db('public.customers').select('id', 'name', 'email');
     return users;
   } catch {
     throw new AppError('Não ha usuarios');
