@@ -42,12 +42,7 @@ export const accommodationsFindAll = async ({
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
-        .leftJoin(
-          'properties.accommodations_emphasys',
-          'properties.accommodations_emphasys.accommodation_id',
-          '=',
-          'avantio.accommodations.id'
-        )
+
         .whereRaw('LOWER(buildings.town) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.name) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.area) LIKE ?', [`%${String(query).toLowerCase()}%`])
@@ -68,7 +63,7 @@ export const accommodationsFindAll = async ({
             currentPage,
             limit: Number(limit)
           }),
-          60
+          10
         );
         return {
           data: accommodations,
