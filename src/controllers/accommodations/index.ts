@@ -3,7 +3,8 @@ import {
   accommodationsFindAll,
   getSearchAutocomplete,
   accommodationsFindAllFree,
-  getUniqueAccommodationApi
+  getUniqueAccommodationApi,
+  getValueAccommodationsService
 } from '../../services/accommodations';
 import AppError from '../../error/AppError';
 import { DataParamsStay } from '../../models/locations';
@@ -86,6 +87,22 @@ export const getUniqueAccommodation = async (req: Request, res: Response) => {
 
   try {
     const accommodations = await getUniqueAccommodationApi(id);
+    res.json(accommodations);
+  } catch (error: any) {
+    res.status(error.statusCode).json({
+      message: error.message
+    });
+  }
+};
+export const getValueAccommodations = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new AppError('Id é obrigatório');
+  }
+
+  try {
+    const accommodations = await getValueAccommodationsService(id);
     res.json(accommodations);
   } catch (error: any) {
     res.status(error.statusCode).json({

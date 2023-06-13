@@ -1,14 +1,15 @@
 import { UserResponse } from '../../models/Users';
 import QueryString from 'qs';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import pool from '../../database/bd';
 import { QueryResult } from 'pg';
 import bcrypt from 'bcrypt';
 import AppError, { ErrorProps } from '../../error/AppError';
-import jwt from 'jsonwebtoken';
+import jwt, { Secret } from 'jsonwebtoken';
 import knex from 'knex';
 import db from '../../database/bd';
-const SECRETE = 'djashdjksah';
 
 export const getUsers = async (): Promise<any[]> => {
   try {
@@ -33,7 +34,7 @@ export const loginUsers = async (email: string, password: string): Promise<UserR
         {
           userId: user[0].id
         },
-        SECRETE,
+        process.env.SECRET as Secret,
         { expiresIn: 1800 }
       );
       const userToken = {

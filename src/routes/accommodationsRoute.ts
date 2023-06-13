@@ -3,7 +3,8 @@ import {
   getAccommodationsAutocompleteController,
   getAccommodationsController,
   getAccommodationsLiveController,
-  getUniqueAccommodation
+  getUniqueAccommodation,
+  getValueAccommodations
 } from '../controllers/accommodations';
 import { verifyJWT } from '../utils/jwt';
 
@@ -13,5 +14,6 @@ router.get('/', getAccommodationsController);
 router.get('/searchAddressAutocomplete', getAccommodationsAutocompleteController);
 router.post('/accommodationsFree', getAccommodationsLiveController);
 router.get('/:id', getUniqueAccommodation);
+router.get('/accommodationValeu/:id', getValueAccommodations);
 
 export default router;

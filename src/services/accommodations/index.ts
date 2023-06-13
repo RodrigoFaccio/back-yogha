@@ -42,6 +42,12 @@ export const accommodationsFindAll = async ({
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
+        .leftJoin(
+          'properties.accommodations_emphasys',
+          'properties.accommodations_emphasys.accommodation_id',
+          '=',
+          'avantio.accommodations.id'
+        )
         .whereRaw('LOWER(buildings.town) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.name) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.area) LIKE ?', [`%${String(query).toLowerCase()}%`])
@@ -89,6 +95,12 @@ export const accommodationsFindAll = async ({
       const offset = (Number(page) - 1) * Number(limit);
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
+        .leftJoin(
+          'properties.accommodations_emphasys',
+          'properties.accommodations_emphasys.accommodation_id',
+          '=',
+          'avantio.accommodations.id'
+        )
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
         .whereNotNull('avantio.accommodations.ref_stays') // Filter to include only non-null values
 
@@ -195,6 +207,18 @@ export const getUniqueAccommodationApi = async (id: string): Promise<any | Error
     console.log(accommodations);
 
     return accommodations.data;
+  } catch (error) {
+    throw new AppError('Verifique os parametros');
+  }
+};
+
+export const getValueAccommodationsService = async (id: string): Promise<any | ErrorProps> => {
+  try {
+    const accommodations = await db('properties.rate_plans')
+      .select('*')
+      .leftJoin('avantio.accommodations', 'properties.rate_plans.accommodation_id', '=', 'avantio.accommodations.id')
+      .where('properties.rate_plans.accommodation_id', '=', id);
+    return accommodations;
   } catch (error) {
     throw new AppError('Verifique os parametros');
   }
