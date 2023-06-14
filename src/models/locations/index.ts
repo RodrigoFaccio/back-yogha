@@ -61,6 +61,7 @@ export interface AccommodationsResponse {
   currentPage: number;
   limit: number;
   cacheExists: boolean;
+  total?: number;
 }
 export type AccommodationsAllFree = {
   query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;

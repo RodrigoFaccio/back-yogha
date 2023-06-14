@@ -45,8 +45,7 @@ export const accommodationsFindAll = async ({
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
-        .leftJoin('avantio.rooms', 'avantio.accommodations.id', '=', 'avantio.rooms.id_accommodation')
-        .leftJoin('avantio.room_images', 'avantio.room_images.room_id', '=', 'avantio.rooms.id')
+
         .leftJoin(
           'properties.accommodations_emphasys',
           'properties.accommodations_emphasys.accommodation_id',
@@ -63,40 +62,26 @@ export const accommodationsFindAll = async ({
         .whereNotNull('avantio.accommodations.ref_stays')
         .offset(offset)
         .limit(Number(limit));
-      function removerIDsRepetidos(array: AccommodationResponse[]): AccommodationResponse[] {
-        const ids: { [id: number]: boolean } = {}; // AccommodationResponse temporário para rastrear IDs
-        const novoArray: AccommodationResponse[] = []; // Novo array para armazenar objetos únicos
 
-        for (const objeto of array) {
-          const { id } = objeto;
-
-          if (!ids[id]) {
-            // Se o ID não estiver no objeto temporário, adiciona o objeto ao novo array
-            novoArray.push(objeto);
-            ids[id] = true; // Atualiza o objeto temporário com o ID
-          }
-        }
-
-        return novoArray;
-      }
-      const newAccommodations = removerIDsRepetidos(accommodations);
-      console.log(newAccommodations.length);
-      if (newAccommodations) {
+      console.log(accommodations.length);
+      if (accommodations) {
         const currentPage = page ? Number(page) : 1;
         setCache(
           cacheKey,
           JSON.stringify({
-            data: newAccommodations,
+            data: accommodations,
             currentPage,
-            limit: Number(limit)
+            limit: Number(limit),
+            total: accommodations.length
           }),
           10
         );
         return {
-          data: newAccommodations,
+          data: accommodations,
           currentPage,
           limit: Number(limit),
-          cacheExists: false
+          cacheExists: false,
+          total: accommodations.length
         };
       } else {
         throw new AppError('Não há acomodações');
@@ -111,13 +96,20 @@ export const accommodationsFindAll = async ({
           data: parsedData.data,
           currentPage: parsedData.currentPage,
           limit: parsedData.limit,
-          cacheExists: true
+          cacheExists: true,
+          total: parsedData.total.length
         };
       }
       const offset = (Number(page) - 1) * Number(limit);
       const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
 
+        .leftJoin(
+          'properties.accommodations_emphasys',
+          'properties.accommodations_emphasys.accommodation_id',
+          '=',
+          'avantio.accommodations.id'
+        )
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
         .whereNotNull('avantio.accommodations.ref_stays') // Filter to include only non-null values
 
@@ -126,6 +118,7 @@ export const accommodationsFindAll = async ({
 
         .offset(offset);
 
+      console.log(accommodations.length);
       if (accommodations) {
         const currentPage = page ? Number(page) : 1;
         setCache(
@@ -133,16 +126,18 @@ export const accommodationsFindAll = async ({
           JSON.stringify({
             data: accommodations,
             currentPage,
-            limit: Number(limit)
+            limit: Number(limit),
+            total: accommodations.length
           }),
-          10
+          5
         );
 
         return {
           data: accommodations,
           currentPage,
           limit: Number(limit),
-          cacheExists: false
+          cacheExists: false,
+          total: accommodations.length
         };
       } else {
         throw new AppError('Não há acomodações');
