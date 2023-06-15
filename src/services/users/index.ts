@@ -1,4 +1,4 @@
-import { UserResponse } from '../../models/Users';
+import { DataCreateUser, UserResponse } from '../../models/Users';
 import QueryString from 'qs';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -53,7 +53,7 @@ export const loginUsers = async (email: string, password: string): Promise<UserR
 export const getBookingsUser = async (
   id: string,
   limit: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined
-): Promise<any[]> => {
+): Promise<any> => {
   try {
     const bookings = await db('avantio.booking')
       .select('*', 'public.customers.id as idUser', 'avantio.booking.id as idBooking')
@@ -63,5 +63,27 @@ export const getBookingsUser = async (
     return bookings;
   } catch {
     throw new AppError('Não ha acomodações para esse usuário');
+  }
+};
+export const createUserService = async (data: DataCreateUser): Promise<any> => {
+  console.log(data);
+  try {
+    const user = await db('public.customers').select('*').where('email', '=', data.email);
+    console.log(user);
+    if (user.length > 0) {
+      return {
+        code: 400,
+
+        message: 'Email ja esta em uso'
+      };
+    } else {
+      await db('public.customers').insert(data).select('*');
+      return {
+        code: 200,
+        message: 'Usuario cadastrado com sucesso'
+      };
+    }
+  } catch (error) {
+    throw new Error('Error creating user: ');
   }
 };

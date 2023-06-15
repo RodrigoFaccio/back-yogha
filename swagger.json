@@ -67,7 +67,7 @@
       }
     },
     "/accommodations": {
-      "get": {
+      "post": {
         "description": "Rota para listagem de todas as locações",
         "tags": ["Accommodations"],
         "parameters": [
@@ -96,6 +96,27 @@
             "required": false
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "checkIn": {
+                    "type": "string"
+                  },
+                  "checkOut": {
+                    "type": "string"
+                  }
+                },
+                "example": {
+                  "checkIn": "2023-06-18",
+                  "checkOut": "2023-06-26"
+                }
+              }
+            }
+          }
+        },
 
         "security": [
           {

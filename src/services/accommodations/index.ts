@@ -13,6 +13,12 @@ import {
 import { checkCache, setCache } from '../../redis/redisCache';
 import axios from 'axios';
 import moment from 'moment';
+import {
+  formatReturnAccommodationCheckInCheckOut,
+  formatReturnAccommodationNotCheckInCheckOut,
+  getDatesBetween,
+  sumValuesByInterval
+} from '../../utils/accommodationsUtils';
 const username = '4b6a509f';
 const password = 'ec9b4a62';
 const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString('base64')}`;
@@ -21,11 +27,12 @@ export const accommodationsFindAll = async ({
   guest,
   limit,
   page,
-  query
+  query,
+  checkIn,
+  checkOut
 }: AccommodationFindAll): Promise<AccommodationsResponse> => {
-  console.log(query);
   const maxGuestCapacity = guest !== undefined ? Number(guest) : 0;
-  const cacheKey = `accommodations:${JSON.stringify({ guest, limit, page, query })}`;
+  const cacheKey = `accommodations:${JSON.stringify({ guest, limit, page, query, checkIn, checkOut })}`;
   const cacheData = await checkCache(cacheKey);
   if (cacheData) {
     const parsedData = JSON.parse(cacheData);
@@ -40,10 +47,13 @@ export const accommodationsFindAll = async ({
 
   try {
     if (query) {
-      console.log('ENTRREI');
       const offset = (Number(page) - 1) * Number(limit);
-      const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
-        .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
+      const accommodations: any[] = await db('avantio.accommodations')
+        .select([
+          'avantio.accommodations.id as idAccommodation',
+          'avantio.accommodations.ref_stays as refStaysAccommodation',
+          '*'
+        ])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
 
         .leftJoin(
@@ -52,6 +62,7 @@ export const accommodationsFindAll = async ({
           '=',
           'avantio.accommodations.id'
         )
+        .leftJoin('properties.rate_plans', 'properties.rate_plans.accommodation_id', '=', 'avantio.accommodations.id')
         .whereRaw('LOWER(buildings.town) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.name) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.area) LIKE ?', [`%${String(query).toLowerCase()}%`])
@@ -59,29 +70,58 @@ export const accommodationsFindAll = async ({
         .orWhereRaw('LOWER(avantio.accommodations.accommodation) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.street_number) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
-        .whereNotNull('avantio.accommodations.ref_stays')
+
         .offset(offset)
         .limit(Number(limit));
 
-      console.log(accommodations.length);
-      if (accommodations) {
+      const newAccommodations = accommodations.filter((item) => item.refStaysAccommodation !== null);
+
+      if (checkIn || checkOut) {
+        const accommodationsValue = sumValuesByInterval(checkIn, checkOut, newAccommodations);
+        const accommodationsValueCheckInCheckOut = formatReturnAccommodationCheckInCheckOut(accommodationsValue);
+
+        if (accommodationsValueCheckInCheckOut) {
+          const currentPage = page ? Number(page) : 1;
+          setCache(
+            cacheKey,
+            JSON.stringify({
+              data: accommodationsValueCheckInCheckOut,
+              currentPage,
+              limit: Number(limit),
+              total: accommodationsValueCheckInCheckOut.length
+            }),
+            5
+          );
+
+          return {
+            data: accommodationsValueCheckInCheckOut,
+            currentPage,
+            limit: Number(limit),
+            cacheExists: false,
+            total: accommodationsValueCheckInCheckOut.length
+          };
+        }
+      }
+      const accommodation = formatReturnAccommodationNotCheckInCheckOut(newAccommodations);
+
+      if (accommodation) {
         const currentPage = page ? Number(page) : 1;
         setCache(
           cacheKey,
           JSON.stringify({
-            data: accommodations,
+            data: accommodation,
             currentPage,
             limit: Number(limit),
-            total: accommodations.length
+            total: accommodation.length
           }),
           10
         );
         return {
-          data: accommodations,
+          data: accommodation,
           currentPage,
           limit: Number(limit),
           cacheExists: false,
-          total: accommodations.length
+          total: accommodation.length
         };
       } else {
         throw new AppError('Não há acomodações');
@@ -101,7 +141,7 @@ export const accommodationsFindAll = async ({
         };
       }
       const offset = (Number(page) - 1) * Number(limit);
-      const accommodations: AccommodationResponse[] = await db('avantio.accommodations')
+      const accommodations: any[] = await db('avantio.accommodations')
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
 
         .leftJoin(
@@ -110,6 +150,7 @@ export const accommodationsFindAll = async ({
           '=',
           'avantio.accommodations.id'
         )
+        .leftJoin('properties.rate_plans', 'properties.rate_plans.accommodation_id', '=', 'avantio.accommodations.id')
         .where('avantio.accommodations.max_guest_capacity', '>=', Number(maxGuestCapacity))
         .whereNotNull('avantio.accommodations.ref_stays') // Filter to include only non-null values
 
@@ -117,27 +158,53 @@ export const accommodationsFindAll = async ({
         .limit(Number(limit))
 
         .offset(offset);
+      if (checkIn || checkOut) {
+        const resultado = sumValuesByInterval(checkIn, checkOut, accommodations);
+        const accommodationsValueCheckInCheckOut = formatReturnAccommodationCheckInCheckOut(resultado);
 
-      console.log(accommodations.length);
-      if (accommodations) {
+        if (accommodationsValueCheckInCheckOut) {
+          const currentPage = page ? Number(page) : 1;
+          setCache(
+            cacheKey,
+            JSON.stringify({
+              data: accommodationsValueCheckInCheckOut,
+              currentPage,
+              limit: Number(limit),
+              total: accommodationsValueCheckInCheckOut.length
+            }),
+            5
+          );
+
+          return {
+            data: accommodationsValueCheckInCheckOut,
+            currentPage,
+            limit: Number(limit),
+            cacheExists: false,
+            total: accommodationsValueCheckInCheckOut.length
+          };
+        }
+      }
+      const accommodationsValueCheckInCheckOut = formatReturnAccommodationNotCheckInCheckOut(accommodations);
+
+      if (accommodationsValueCheckInCheckOut) {
         const currentPage = page ? Number(page) : 1;
         setCache(
           cacheKey,
           JSON.stringify({
-            data: accommodations,
+            data: accommodationsValueCheckInCheckOut,
             currentPage,
             limit: Number(limit),
-            total: accommodations.length
+            total: accommodationsValueCheckInCheckOut.length
           }),
           5
         );
 
         return {
-          data: accommodations,
+          data: accommodationsValueCheckInCheckOut,
           currentPage,
           limit: Number(limit),
           cacheExists: false,
-          total: accommodations.length
+          total: accommodationsValueCheckInCheckOut.length
         };
       } else {
         throw new AppError('Não há acomodações');
@@ -178,7 +245,6 @@ export const getSearchAutocomplete = async ({
 };
 export const accommodationsFindAllFree = async (data: DataParamsStay): Promise<any | ErrorProps> => {
   const cacheKey = `accommodations:${JSON.stringify(data)}`;
-  console.log(cacheKey);
   const cacheData = await checkCache(cacheKey);
   if (cacheData) {
     const parsedData = JSON.parse(cacheData);
@@ -216,7 +282,6 @@ export const getUniqueAccommodationApi = async (id: string): Promise<any | Error
         Authorization: authHeader
       }
     });
-    console.log(accommodations);
 
     return accommodations.data;
   } catch (error) {
@@ -263,6 +328,50 @@ export const getValueAccommodationsService = async (
       sumDailyValues: total.soma,
       averagePerNight: total.soma / total.numDias
     };
+  } catch (error) {
+    throw new AppError('Verifique os parametros');
+  }
+};
+export const getCheckCalendarAccommodation = async (id: string): Promise<any | ErrorProps> => {
+  const currentDate = moment();
+  const checkIn = currentDate.format('YYYY-MM-DD');
+  const newDate = currentDate.add(1, 'year');
+
+  const checkOut = newDate.format('YYYY-MM-DD');
+  console.log(checkIn, checkOut);
+  try {
+    const accommodations: any = await axios.get(`https://yogha.stays.net/external/v1/calendar/listing/${id}`, {
+      headers: {
+        Authorization: authHeader
+      },
+      params: {
+        from: checkIn,
+        to: checkOut
+      }
+    });
+
+    const formateAccommodations = accommodations.data.filter((item: any) => {
+      if (item.avail === 0) {
+        return {
+          date: item.date,
+          resevado: true
+        };
+      }
+    });
+
+    const NewArr = formateAccommodations.map((item: any) => {
+      return {
+        date: item.date,
+        resevado: true
+      };
+    });
+    if (NewArr.length <= 0) {
+      return {
+        message: 'Essa acomodação não tem nenhuma reserva'
+      };
+    } else {
+      return NewArr;
+    }
   } catch (error) {
     throw new AppError('Verifique os parametros');
   }

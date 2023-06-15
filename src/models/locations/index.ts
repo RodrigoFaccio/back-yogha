@@ -55,6 +55,8 @@ export type AccommodationFindAll = {
   query: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
   guest: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
   page: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  checkIn: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
+  checkOut: string | QueryString.ParsedQs | string[] | QueryString.ParsedQs[] | undefined;
 };
 export interface AccommodationsResponse {
   data: AccommodationResponse[];

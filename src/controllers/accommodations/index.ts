@@ -4,16 +4,18 @@ import {
   getSearchAutocomplete,
   accommodationsFindAllFree,
   getUniqueAccommodationApi,
-  getValueAccommodationsService
+  getValueAccommodationsService,
+  getCheckCalendarAccommodation
 } from '../../services/accommodations';
 import AppError from '../../error/AppError';
 import { DataParamsStay } from '../../models/locations';
 
 export const getAccommodationsController = async (req: Request, res: Response) => {
   const { limit, query, guest, page } = req.query;
+  const { checkIn, checkOut } = req.body;
 
   try {
-    const accommodations = await accommodationsFindAll({ guest, limit, page, query });
+    const accommodations = await accommodationsFindAll({ guest, limit, page, query, checkIn, checkOut });
     res.json(accommodations);
   } catch (error: any) {
     res.status(error.statusCode).json({
@@ -104,6 +106,22 @@ export const getValueAccommodations = async (req: Request, res: Response) => {
 
   try {
     const accommodations = await getValueAccommodationsService(id, checkIn, checkOut);
+    res.json(accommodations);
+  } catch (error: any) {
+    res.status(error.statusCode).json({
+      message: error.message
+    });
+  }
+};
+export const getCalendarAccommodation = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (!id) {
+    throw new AppError('Id é obrigatório');
+  }
+
+  try {
+    const accommodations = await getCheckCalendarAccommodation(id);
     res.json(accommodations);
   } catch (error: any) {
     res.status(error.statusCode).json({

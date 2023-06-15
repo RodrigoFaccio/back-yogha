@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
-import { getUsers, loginUsers, getBookingsUser } from '../../services/users';
+import bcrypt from 'bcrypt';
+
+import { getUsers, loginUsers, getBookingsUser, createUserService } from '../../services/users';
 export const getUsersController = async (req: Request, res: Response) => {
   const users = await getUsers();
   res.json(users);
@@ -37,5 +39,27 @@ export const bookingController = async (req: Request, res: Response) => {
       status: error.statusCode,
       message: error.message
     });
+  }
+};
+export const createUser = async (req: Request, res: Response) => {
+  const { email, mobile_phone, document, surname, password, name } = req.body;
+  const cryptPassword = await bcrypt.hash(password, 10);
+  const data = {
+    email,
+    mobile_phone,
+    document,
+    surname,
+    password: cryptPassword,
+    name
+  };
+
+  try {
+    const user = await createUserService(data);
+    if (user.code === 400) {
+      res.status(400).json(user);
+    }
+    res.json(user);
+  } catch (error) {
+    console.log(error);
   }
 };
