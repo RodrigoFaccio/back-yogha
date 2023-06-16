@@ -49,13 +49,7 @@ export const accommodationsFindAll = async ({
     if (query) {
       const offset = (Number(page) - 1) * Number(limit);
       const accommodations: any[] = await db('avantio.accommodations')
-        .select([
-          'avantio.accommodations.id as idAccommodation',
-          'avantio.accommodations.ref_stays as refStaysAccommodation',
-          '*'
-        ])
         .leftJoin('system.buildings as buildings', 'accommodations.building_yogha', '=', 'buildings.id')
-
         .leftJoin(
           'properties.accommodations_emphasys',
           'properties.accommodations_emphasys.accommodation_id',
@@ -63,6 +57,7 @@ export const accommodationsFindAll = async ({
           'avantio.accommodations.id'
         )
         .leftJoin('properties.rate_plans', 'properties.rate_plans.accommodation_id', '=', 'avantio.accommodations.id')
+        .select(['avantio.accommodations.id as idAccommodation', 'avantio.accommodations.ref_stays as refStayId', '*'])
         .whereRaw('LOWER(buildings.town) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.name) LIKE ?', [`%${String(query).toLowerCase()}%`])
         .orWhereRaw('LOWER(buildings.area) LIKE ?', [`%${String(query).toLowerCase()}%`])
@@ -90,7 +85,7 @@ export const accommodationsFindAll = async ({
               limit: Number(limit),
               total: accommodationsValueCheckInCheckOut.length
             }),
-            5
+            60
           );
 
           return {
@@ -127,7 +122,7 @@ export const accommodationsFindAll = async ({
         throw new AppError('Não há acomodações');
       }
     } else {
-      const cacheKey = `accommodations:${JSON.stringify({ guest, limit, page })}`;
+      const cacheKey = `accommodations:${JSON.stringify({ guest, limit, page, checkIn, checkOut })}`;
       const cacheData = await checkCache(cacheKey);
       if (cacheData) {
         const parsedData = JSON.parse(cacheData);
@@ -172,7 +167,7 @@ export const accommodationsFindAll = async ({
               limit: Number(limit),
               total: accommodationsValueCheckInCheckOut.length
             }),
-            5
+            10
           );
 
           return {
@@ -196,7 +191,7 @@ export const accommodationsFindAll = async ({
             limit: Number(limit),
             total: accommodationsValueCheckInCheckOut.length
           }),
-          5
+          10
         );
 
         return {
