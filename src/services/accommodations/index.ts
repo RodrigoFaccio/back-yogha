@@ -69,7 +69,7 @@ export const accommodationsFindAll = async ({
         .offset(offset)
         .limit(Number(limit));
 
-      const newAccommodations = accommodations.filter((item) => item.refStaysAccommodation !== null);
+      const newAccommodations = accommodations.filter((item) => item.refStayId !== null);
 
       if (checkIn || checkOut) {
         const accommodationsValue = sumValuesByInterval(checkIn, checkOut, newAccommodations);
