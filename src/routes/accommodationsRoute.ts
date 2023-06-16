@@ -16,6 +16,6 @@ router.get('/searchAddressAutocomplete', getAccommodationsAutocompleteController
 router.post('/accommodationsFree', getAccommodationsLiveController);
 router.get('/:id', getUniqueAccommodation);
 router.get('/notFreeCalendar/:id', getCalendarAccommodation);
-router.post('/accommodationValeu/:id', getValueAccommodations);
+router.post('/accommodationValue/:id', getValueAccommodations);
 
 export default router;

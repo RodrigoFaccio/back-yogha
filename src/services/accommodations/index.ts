@@ -293,7 +293,7 @@ export const getValueAccommodationsService = async (
     const accommodations = await db('properties.rate_plans')
       .select('*')
       .leftJoin('avantio.accommodations', 'properties.rate_plans.accommodation_id', '=', 'avantio.accommodations.id')
-      .where('properties.rate_plans.accommodation_id', '=', id);
+      .where('avantio.accommodations.ref_stays', '=', id);
 
     function somarValoresPorIntervalo(dataInicio: string, dataFim: string) {
       let soma = 0;
