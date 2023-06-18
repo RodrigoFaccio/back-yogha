@@ -316,12 +316,57 @@ export const getValueAccommodationsService = async (
         numDias
       };
     }
+    function somar1MesDataAtual() {
+      var dataAtual = new Date();
+      var anoA = dataAtual.getFullYear();
+      var mesA = dataAtual.getMonth() + 1;
+      var diaA = dataAtual.getDate();
+      var dataFormatadaA = `${anoA}-${mesA.toString().padStart(2, '0')}-${diaA.toString().padStart(2, '0')}`;
+
+      var dataNova = new Date(dataAtual.getFullYear(), dataAtual.getMonth() + 1, dataAtual.getDate());
+      var ano = dataNova.getFullYear();
+      var mes = dataNova.getMonth() + 1;
+      var dia = dataNova.getDate();
+      var dataFormatada = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+
+      return {
+        dataAtualA: dataFormatadaA,
+        dataAtualMais1Mes: dataFormatada
+      };
+    }
+
+    function somarValoresMes(dataInicio: string, dataFim: string) {
+      console.log(dataInicio, dataFim);
+      let soma = 0;
+      let numDias = 0;
+      const datas = Object.keys(accommodations[0]).filter((key) =>
+        moment(key).isBetween(dataInicio, dataFim, null, '[]')
+      );
+
+      for (let i = 0; i < datas.length; i++) {
+        const valor = parseFloat(accommodations[0][datas[i]]);
+        if (!isNaN(valor)) {
+          soma += valor;
+        }
+      }
+
+      numDias = moment(dataFim).diff(dataInicio, 'days') + 1;
+
+      return {
+        sumMonth: soma
+      };
+    }
+    var datas = somar1MesDataAtual();
+
     const total = somarValoresPorIntervalo(checkIn, checkOut);
+    const somaMes = somarValoresMes(String(datas.dataAtualA), String(datas.dataAtualMais1Mes));
+    console.log(somaMes);
 
     return {
       ...accommodations[0],
-      sumDailyValues: total.soma,
-      averagePerNight: total.soma / total.numDias
+      sumDailyValues: total.soma.toFixed(2),
+      sumMonth: somaMes.sumMonth.toFixed(2),
+      averagePerNight: (total.soma / total.numDias).toFixed(2)
     };
   } catch (error) {
     throw new AppError('Verifique os parametros');
