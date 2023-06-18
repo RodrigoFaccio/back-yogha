@@ -362,8 +362,15 @@ export const getValueAccommodationsService = async (
     const somaMes = somarValoresMes(String(datas.dataAtualA), String(datas.dataAtualMais1Mes));
     console.log(somaMes);
 
+    const accommodationsFormated = accommodations.map((item) => {
+      return {
+        ...accommodations,
+        uniqueValue: item[datas.dataAtualA]
+      };
+    });
+
     return {
-      ...accommodations[0],
+      ...accommodationsFormated[0],
       sumDailyValues: total.soma.toFixed(2),
       sumMonth: somaMes.sumMonth.toFixed(2),
       averagePerNight: (total.soma / total.numDias).toFixed(2)
